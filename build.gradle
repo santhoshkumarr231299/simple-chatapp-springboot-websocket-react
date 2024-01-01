@@ -1,0 +1,69 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.2.1'
+	id 'io.spring.dependency-management' version '1.1.4'
+	id 'com.github.node-gradle.node' version '3.5.0'
+}
+
+group = 'com.realstar'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	sourceCompatibility = '17'
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+node {
+	download = false
+	workDir = file("${project.projectDir}/src/main/webapp/client/nodejs")
+	npmWorkDir = file("${project.projectDir}/src/main/webapp/client/npm")
+	nodeModulesDir = file("${project.projectDir}/src/main/webapp/client")
+}
+
+tasks.register('appNpmInstall', NpmTask) {
+	description = "read package.json and install all dependencies"
+	workingDir = file("${project.projectDir}/src/main/webapp/client")
+	args = ["install", "--debug"]
+}
+
+tasks.register('appNpmBuild', NpmTask) {
+	description = "read package.json and install all dependencies"
+	workingDir = file("${project.projectDir}/src/main/webapp/client")
+	args = ["run", "build"]
+}
+
+tasks.register('CopyClientToBuild', Copy) {
+	from "${project.projectDir}/src/main/webapp/client/dist/"
+	into "${project.buildDir}/resources/main/static"
+}
+
+tasks.register('deleteClientFiles', Delete) {
+	delete "${project.projectDir}/src/main/webapp/client/dist/"
+	// delete "${project.projectDir}/src/main/webapp/client/node_modules/"
+}
+
+appNpmBuild.dependsOn appNpmInstall
+CopyClientToBuild.dependsOn appNpmBuild
+deleteClientFiles.dependsOn CopyClientToBuild
+compileJava.dependsOn deleteClientFiles
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

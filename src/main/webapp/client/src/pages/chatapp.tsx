@@ -8,7 +8,7 @@ function App() {
     const [name, setName] = useState('');
     const [stompClient, setStompClient] = useState<any>(null);
     
-    const socket = new SockJS("http://localhost:8080/realstar");
+    const socket = new SockJS("/realstar");
     const client = Stomp.over(socket);
     client.debug = () => {}; //to get rid of the console.log messages
 
